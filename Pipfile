@@ -1,0 +1,29 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fastapi = "*"
+cryptography = "*"
+uvicorn = {extras = ["standard"], version = "*"}
+
+[dev-packages]
+pylint = "*"
+isort = "*"
+black = "*"
+# more-itertools = "*"
+flake8 = "*"
+flake8-docstrings = "*"
+flake8-isort = "*"
+# ipdb = "*"
+# ipython = "*"
+mypy = "*"
+pep8-naming = "*"
+pre-commit = "*"
+pytest = "*"
+pytest-mock = "*"
+#pympler = "*"
+
+[requires]
+python_version = "3.10"
