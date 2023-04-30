@@ -1,9 +1,15 @@
 from datetime import datetime, timedelta
-from typing import Union
+
+from pydantic import BaseModel
 
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from fastapi import FastAPI
+
+
+class Item(BaseModel):
+    name: str
+    csr: str
 
 
 app = FastAPI()
@@ -32,9 +38,17 @@ def sign_certificate_request(csr_cert, ca_cert, private_ca_key):
 
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return {"msg": "Hello World"}
 
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+@app.get("/health")
+def read_health():
+    return {"Health": "OK"}
+
+
+# TODO: implement cert scr extraction and signinc with CA key to return
+# signed client cert valid for 3 days
+@app.put("/cert/sign")  # certs/sign data={name:"", csr:""}.
+async def cert_sign(item: Item ):
+    print(item)
+    return {"Request from": item.name, "Result": "ok"}
