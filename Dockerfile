@@ -1,4 +1,6 @@
+ARG VCS_REF
 FROM docker.io/python:3.9-slim-bullseye as base
+ARG VCS_REF
 ENV PYTHONDONTWRITEBYTECODE 1
 # Enable fault handler
 ENV PYTHONFAULTHANDLER 1
@@ -14,7 +16,10 @@ RUN \
  printenv && \
  ls -lah /.venv/lib/python3.9/site-packages
 
+# TODO : use Python 3.10 distroless image instead:
 FROM gcr.io/distroless/python3:debug-nonroot
+ARG VCS_REF
+ENV VCS_REF=${VCS_REF}
 WORKDIR /app
 # Copy the python packages because the distroless base image does 
 COPY --from=base /.venv/lib/python3.9/site-packages /app/site-packages
@@ -25,4 +30,8 @@ COPY src/sign_srv_fastapi.py src/run.py /app/
 ENTRYPOINT ["/usr/bin/python", "run.py"]
 EXPOSE 8000
 HEALTHCHECK --interval=1m --timeout=3s \
-  CMD /busybox/wget -o /dev/null 'http://127.0.0.1:8000/health' || exit 1
+  CMD /busybox/wget -o /dev/null 'http://127.0.0.1:80/health' || exit 1
+LABEL org.opencontainers.image.authors="Konstantin Babin" \
+  org.opencontainers.image.source="github.com:babinkos/test-task-certsign-server-py/Dockerfile" \
+  org.opencontainers.image.base.name="503110391064.dkr.ecr.eu-central-1.amazonaws.com/sign-svc" \
+  org.opencontainers.image.revision="${VCS_REF}"
