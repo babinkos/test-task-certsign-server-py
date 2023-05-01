@@ -1,0 +1,12 @@
+.vscode/
+.env
+.isort.cfg
+.pre-commit-config.yaml
+conda-activate.sh
+pipenv-in-conda.sh
+requirements.txt
+pipenv-prepare.sh
+pre-commit_run.sh
+LICENSE
+README.md
+test-task-certsign-server-py.code-workspace
