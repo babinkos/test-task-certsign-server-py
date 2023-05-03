@@ -5,8 +5,8 @@ ENV PYTHONDONTWRITEBYTECODE 1
 # Enable fault handler
 ENV PYTHONFAULTHANDLER 1
 ### Install python dependencies in /.venv
-COPY Pipfile .
-COPY Pipfile.lock .
+COPY Pipfile Pipfile.lock .
+
 RUN \
  set -ex && \
  pip install pipenv && \
@@ -16,21 +16,29 @@ RUN \
  printenv && \
  ls -lah /.venv/lib/python3.9/site-packages
 
-# TODO : use Python 3.10 distroless image instead:
-FROM gcr.io/distroless/python3:debug-nonroot
+FROM docker.io/python:3.9-slim-bullseye
 ARG VCS_REF
-ENV VCS_REF=${VCS_REF}
 WORKDIR /app
 # Copy the python packages because the distroless base image does 
 COPY --from=base /.venv/lib/python3.9/site-packages /app/site-packages
 # Set the Python path where the interpreter will look for the packages
-ENV PYTHONPATH /app/site-packages
+ENV VCS_REF=${VCS_REF} \
+  PYTHONPATH=/app/site-packages \
+  DEBIAN_FRONTEND=noninteractive LANGUAGE=C.UTF-8 LANG=C.UTF-8 LC_ALL=C.UTF-8 \
+  LC_CTYPE=C.UTF-8 LC_MESSAGES=C.UTF-8
 COPY src/sign_srv_fastapi.py src/run.py /app/
+RUN \
+  apt update && \
+  apt install curl -y && \
+  apt-get autoremove -yqq --purge && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/*
+
 # https://fastapi.tiangolo.com/deployment/docker/ :
-ENTRYPOINT ["/usr/bin/python", "run.py"]
-EXPOSE 8000
-HEALTHCHECK --interval=1m --timeout=3s \
-  CMD /busybox/wget -o /dev/null 'http://127.0.0.1:80/health' || exit 1
+CMD ["/usr/local/bin/python", "run.py"]
+EXPOSE 80
+# HEALTHCHECK --interval=1m --timeout=3s \
+#   CMD curl -f 'http://localhost:80/healthz'
 LABEL org.opencontainers.image.authors="Konstantin Babin" \
   org.opencontainers.image.source="github.com:babinkos/test-task-certsign-server-py/Dockerfile" \
   org.opencontainers.image.base.name="503110391064.dkr.ecr.eu-central-1.amazonaws.com/sign-svc" \
