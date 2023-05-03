@@ -38,13 +38,18 @@ def sign_certificate_request(csr_cert, ca_cert, private_ca_key):
 
 
 @app.get("/")
-def read_root():
+async def read_root():
     return {"msg": "Hello World"}
 
 
-@app.get("/health")
-def read_health():
-    return {"Health": "OK", "node": NODE_NAME}
+@app.get("/healthz", status_code=204)
+async def read_healthz():
+    return None
+
+
+@app.get("/health", status_code=200)
+async def read_health():
+    return {"status": "healthy", "node": NODE_NAME}
 
 
 # TODO: implement cert scr extraction and signinc with CA key to return
