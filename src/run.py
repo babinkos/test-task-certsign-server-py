@@ -6,8 +6,8 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=80,
         reload=False,
-        log_level="debug",
-        access_log=True,
+        log_level="info",
+        access_log=False,
         workers=1, # In K8s or ECS we should better run single worker per container, see : https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker#-warning-you-probably-dont-need-this-docker-image
         proxy_headers=True, # https://github.com/encode/uvicorn/blob/master/uvicorn/config.py#L223
     )
