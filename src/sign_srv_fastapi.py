@@ -1,15 +1,51 @@
+import base64
+import logging
+import os
 from datetime import datetime, timedelta
-from platform import node
-from pathlib import Path
-from pydantic import BaseModel
-import base64, os
-
-from cryptography import x509
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.backends import default_backend
-from fastapi import FastAPI
 
 # from typing import Union # we need it in python before 3.10 in case we use union types
+from logging.config import dictConfig
+from pathlib import Path
+from platform import node
+
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, serialization
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+
+class LogConfig(BaseModel):
+    """Logging configuration to be set for the server"""
+
+    LOGGER_NAME: str = "signsrv"
+    LOG_FORMAT: str = "%(levelprefix)s | %(asctime)s | %(message)s"
+    LOG_LEVEL: str = "DEBUG"
+
+    # Logging config
+    version = 1
+    disable_existing_loggers = False
+    formatters = {
+        "default": {
+            "()": "uvicorn.logging.DefaultFormatter",
+            "fmt": LOG_FORMAT,
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+    }
+    handlers = {
+        "default": {
+            "formatter": "default",
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stderr",
+        },
+    }
+    loggers = {
+        LOGGER_NAME: {"handlers": ["default"], "level": LOG_LEVEL},
+    }
+
+
+dictConfig(LogConfig().dict())
+logger = logging.getLogger("signsrv")
 
 
 class Item(BaseModel):
@@ -28,17 +64,28 @@ CA_KEY_PATH2 = "../certs/privatekey.pem"
 CA_KEY_PATH = CA_KEY_PATH1 if Path(CA_KEY_PATH1).is_file() else CA_KEY_PATH2
 CA_CERT_PATH = CA_CERT_PATH1 if Path(CA_CERT_PATH1).is_file() else CA_CERT_PATH2
 CA_CERT = x509.load_pem_x509_certificate(open(CA_CERT_PATH, "rb").read())
-CA_KEY = serialization.load_pem_private_key(open(CA_KEY_PATH, "rb").read(), None, default_backend())
+CA_KEY = serialization.load_pem_private_key(
+    open(CA_KEY_PATH, "rb").read(), None, default_backend()
+)
 CERT_VALIDITY_DAYS = os.environ.get("CERT_VALIDITY_DAYS", 3)
 
 
 def load_csr_from_str(csr_str):
-    return x509.load_pem_x509_csr(csr_str.encode("ASCII"))
+    if (csr_str.find("-----BEGIN CERTIFICATE REQUEST-----") != -1) and (
+        csr_str.find("-----END CERTIFICATE REQUEST-----") != -1
+    ):
+        result = x509.load_pem_x509_csr(csr_str.encode("ASCII"))
+    else:
+        result = None
+        logger.debug("INVALID CSR content:")
+        logger.debug(csr_str)
+        raise Exception("CSR invalid")
+    return result
 
 
 def sign_certificate_request(csr_str):
     csr_cert = load_csr_from_str(csr_str)
-    if csr_cert.is_signature_valid :
+    if csr_cert.is_signature_valid:
         cert = (
             x509.CertificateBuilder()
             .subject_name(csr_cert.subject)
@@ -79,8 +126,13 @@ async def read_health():
 # signed client cert valid for 3 days
 @app.put("/cert/sign")  # certs/sign data={name:"", csr:""}.
 async def cert_sign(item: Item):
-    # print(sign_certificate_request(item.csr))
-    return {"Request from": item.name, "Result": sign_certificate_request(item.csr), "node": NODE_NAME}
+    logger.debug(f"name: {item.name}")
+    return {
+        "Request from": item.name,
+        "Result": sign_certificate_request(item.csr),
+        "node": NODE_NAME,
+    }
+
 
 # CSR_PATH = "../certs/csr_user1.pem"
 # csr = open(CSR_PATH, "r").read()
