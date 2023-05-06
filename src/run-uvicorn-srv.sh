@@ -1,2 +1,2 @@
-#! /uar/bin/env bash
-uvicorn sign_srv_fastapi:app --reload
+#! /usr/bin/env bash
+pipenv run python sign_srv_fastapi.py

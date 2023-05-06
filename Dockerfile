@@ -19,23 +19,24 @@ RUN \
 FROM docker.io/python:3.9-slim-bullseye
 ARG VCS_REF
 WORKDIR /app
-# Copy the python packages because the distroless base image does 
+# Copy the python packages because the distroless base image does
 COPY --from=base /.venv/lib/python3.9/site-packages /app/site-packages
 # Set the Python path where the interpreter will look for the packages
 ENV VCS_REF=${VCS_REF} \
   PYTHONPATH=/app/site-packages \
   DEBIAN_FRONTEND=noninteractive LANGUAGE=C.UTF-8 LANG=C.UTF-8 LC_ALL=C.UTF-8 \
   LC_CTYPE=C.UTF-8 LC_MESSAGES=C.UTF-8
-COPY src/sign_srv_fastapi.py src/run.py /app/
+COPY src/sign_srv_fastapi.py certs/privatekey.pem certs/public.crt /app/
 RUN \
   apt update && \
   apt install curl -y && \
   apt-get autoremove -yqq --purge && \
   apt-get clean && \
-  rm -rf /var/lib/apt/lists/*
+  rm -rf /var/lib/apt/lists/* && \
+  find /app/ -type f -exec sha256sum {} +
 
 # https://fastapi.tiangolo.com/deployment/docker/ :
-CMD ["/usr/local/bin/python", "run.py"]
+CMD ["/usr/local/bin/python", "sign_srv_fastapi.py"]
 EXPOSE 80
 # HEALTHCHECK --interval=1m --timeout=3s \
 #   CMD curl -f 'http://localhost:80/healthz'
