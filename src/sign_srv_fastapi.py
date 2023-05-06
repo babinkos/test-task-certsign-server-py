@@ -69,7 +69,12 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
+def is_docker():
+    cgroup = Path('/proc/self/cgroup')
+    return Path('/.dockerenv').is_file() or cgroup.is_file() and 'docker' in cgroup.read_text()
+
 NODE_NAME = node()
+HTTP_PORT = 80 if is_docker() else 8080 # root permissions needed locally to bind 80 port (lower 1024)
 # in Docker it would be in same folder with .py :
 CA_CERT_PATH1 = "./public.crt"
 CA_KEY_PATH1 = "./privatekey.pem"
@@ -155,7 +160,7 @@ if __name__ == "__main__":
     uvicorn.run(
         app,
         host="0.0.0.0",
-        port=80,
+        port=HTTP_PORT,
         reload=False,
         log_level="debug",
         access_log=True,
