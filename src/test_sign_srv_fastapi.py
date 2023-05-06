@@ -1,8 +1,11 @@
-from fastapi.testclient import TestClient
-from cryptography import x509
-from cryptography.hazmat.primitives import hashes, serialization
 from platform import node
+
+# from cryptography import x509
+# from cryptography.hazmat.primitives import hashes, serialization
+from fastapi.testclient import TestClient
+
 from .sign_srv_fastapi import app
+
 
 client = TestClient(app)
 NODE_NAME = node()
@@ -39,5 +42,5 @@ def test_cert_sign():
     assert response.status_code == 200
     assert response.json()["Request from"] == "user1"
     assert response.json()["node"] == NODE_NAME
-    assert response.json()["Result"].find('-----BEGIN CERTIFICATE-----') != -1
-    assert response.json()["Result"].find('-----END CERTIFICATE-----') != -1
+    assert response.json()["Result"].find("-----BEGIN CERTIFICATE-----") != -1
+    assert response.json()["Result"].find("-----END CERTIFICATE-----") != -1
