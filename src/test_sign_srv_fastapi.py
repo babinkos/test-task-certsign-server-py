@@ -25,9 +25,35 @@ def test_read_health():
     assert response.json() == {"status": "healthy", "node": NODE_NAME}
 
 
+def test_read_health_alb():
+    # curl -v -X GET 'http://127.0.0.1:8000/health/alb'
+    response = client.get("/health/alb")
+    assert response.status_code == 200
+    assert response.json() == {"status": "healthy", "node": NODE_NAME}
+
+
+def test_read_health_r53():
+    # curl -v -X GET 'http://127.0.0.1:8000/health/r53'
+    response = client.get("/health/r53")
+    assert response.status_code == 200
+    assert response.json() == {"status": "healthy", "node": NODE_NAME}
+
+
 def test_read_healthz():
     # curl -v -X GET 'http://127.0.0.1:8000/health'
     response = client.get("/healthz")
+    assert response.status_code == 204
+
+
+def test_read_healthz_alb():
+    # curl -v -X GET 'http://127.0.0.1:8000/health/alb'
+    response = client.get("/healthz/alb")
+    assert response.status_code == 204
+
+
+def test_read_healthz_r53():
+    # curl -v -X GET 'http://127.0.0.1:8000/health/r53'
+    response = client.get("/healthz/r53")
     assert response.status_code == 204
 
 

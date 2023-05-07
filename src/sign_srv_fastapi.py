@@ -149,8 +149,33 @@ async def read_healthz():
     return None
 
 
+@app.get("/healthz/container", status_code=204)
+async def read_healthz_container():
+    return None
+
+
+@app.get("/healthz/alb", status_code=204)
+async def read_healthz_alb():
+    return None
+
+
+@app.get("/healthz/r53", status_code=204)
+async def read_healthz_r53():
+    return None
+
+
 @app.get("/health", status_code=200)
 async def read_health():
+    return {"status": "healthy", "node": NODE_NAME}
+
+
+@app.get("/health/alb", status_code=200)
+async def read_health_alb():
+    return {"status": "healthy", "node": NODE_NAME}
+
+
+@app.get("/health/r53", status_code=200)
+async def read_health_r53():
     return {"status": "healthy", "node": NODE_NAME}
 
 
