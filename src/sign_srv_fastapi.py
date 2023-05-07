@@ -22,7 +22,7 @@ class LogConfig(BaseModel):
     """Logging configuration to be set for the server"""
 
     LOGGER_NAME: str = "signsrv"
-    LOG_FORMAT: str = "%(levelprefix)s | %(asctime)s | %(message)s"
+    LOG_FORMAT: str = "%(levelname)s | %(asctime)s | %(message)s"
     LOG_LEVEL: str = "DEBUG"
 
     # Logging config
@@ -39,7 +39,8 @@ class LogConfig(BaseModel):
         "default": {
             "formatter": "default",
             "class": "logging.StreamHandler",
-            "stream": "ext://sys.stderr",
+            # "stream": "ext://sys.stderr",
+            "stream": "ext://sys.stdout",
         },
     }
     loggers = {
@@ -70,11 +71,20 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 def is_docker():
-    cgroup = Path('/proc/self/cgroup')
-    return Path('/.dockerenv').is_file() or cgroup.is_file() and 'docker' in cgroup.read_text()
+    cgroup = Path("/proc/self/cgroup")
+    res = (
+        Path("/.dockerenv").is_file()
+        or cgroup.is_file()
+        and "docker" in cgroup.read_text()
+    )
+    logger.debug(f"Container detected: {res}")
+    return res
+
 
 NODE_NAME = node()
-HTTP_PORT = 80 if is_docker() else 8080 # root permissions needed locally to bind 80 port (lower 1024)
+HTTP_PORT = (
+    80 if is_docker() else 8080
+)  # root permissions needed locally to bind 80 port (lower 1024)
 # in Docker it would be in same folder with .py :
 CA_CERT_PATH1 = "./public.crt"
 CA_KEY_PATH1 = "./privatekey.pem"
@@ -157,12 +167,22 @@ async def cert_sign(item: Item):
 
 
 if __name__ == "__main__":
+    log_config = uvicorn.config.LOGGING_CONFIG
+    log_config["formatters"]["access"][
+        "fmt"
+    ] = "%(levelname)s | %(asctime)s | %(message)s"
+    log_config["formatters"]["default"][
+        "fmt"
+    ] = "%(levelname)s | %(asctime)s | %(message)s"
+    log_config["formatters"]["access"]["datefmt"] = "%Y-%m-%d %H:%M:%S"
+    log_config["formatters"]["default"]["datefmt"] = "%Y-%m-%d %H:%M:%S"
+    log_config["handlers"]["default"]["stream"] = "ext://sys.stdout"
     uvicorn.run(
         app,
         host="0.0.0.0",
         port=HTTP_PORT,
         reload=False,
-        log_level="debug",
+        log_level="info",
         access_log=True,
         workers=1,  # In K8s or ECS we should better run single worker per container, see : https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker#-warning-you-probably-dont-need-this-docker-image
         proxy_headers=True,  # https://github.com/encode/uvicorn/blob/master/uvicorn/config.py#L223

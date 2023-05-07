@@ -32,7 +32,7 @@ def test_read_healthz():
 
 
 def test_cert_sign():
-    # curl -v -X PUT -H "Content-Type: application/json" 'http://127.0.0.1:8000/cert/sign' -d '{"name":"test1","csr":"none"}'
+    # curl -v -X PUT -H "Content-Type: application/json" 'http://127.0.0.1:8080/cert/sign' -d '{"name":"test1","csr":"none"}'
     # x509.load_pem_x509_csr(open(CSR_PATH, "rb").read())
     csr = open(CSR_PATH, "r").read()
     response = client.put(
