@@ -8,13 +8,13 @@ ENV PYTHONFAULTHANDLER 1
 COPY Pipfile Pipfile.lock .
 
 RUN \
- set -ex && \
- pip install pipenv && \
- PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy && \
- pipenv run pip list && \
- ls -lah /.venv && \
- printenv && \
- ls -lah /.venv/lib/python3.9/site-packages
+  set -ex && \
+  pip install pipenv && \
+  PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy && \
+  pipenv run pip list && \
+  ls -lah /.venv && \
+  printenv && \
+  ls -lah /.venv/lib/python3.9/site-packages
 
 FROM docker.io/python:3.9-slim-bullseye
 ARG VCS_REF
@@ -33,6 +33,7 @@ RUN \
   apt-get autoremove -yqq --purge && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/* && \
+  python -m compileall && \
   find /app/ -type f -exec sha256sum {} +
 
 # https://fastapi.tiangolo.com/deployment/docker/ :
