@@ -38,8 +38,8 @@ RUN \
 # https://fastapi.tiangolo.com/deployment/docker/ :
 CMD ["/usr/local/bin/python", "sign_srv_fastapi.py"]
 EXPOSE 80
-# HEALTHCHECK --interval=1m --timeout=3s \
-#   CMD curl -f 'http://localhost:80/healthz'
+HEALTHCHECK --interval=13s --timeout=3s --start-period=2s --retries=3 \
+  CMD /usr/bin/curl -sf 'http://localhost:80/healthz'
 LABEL org.opencontainers.image.authors="Konstantin Babin" \
   org.opencontainers.image.source="github.com:babinkos/test-task-certsign-server-py/Dockerfile" \
   org.opencontainers.image.base.name="503110391064.dkr.ecr.eu-central-1.amazonaws.com/sign-svc" \
