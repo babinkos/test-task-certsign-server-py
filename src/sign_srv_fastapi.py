@@ -1,6 +1,7 @@
 # import base64
 import logging
 import os
+import time
 from datetime import datetime, timedelta
 
 # from typing import Union # we need it in python before 3.10 in case we use union types
@@ -14,6 +15,8 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
+
+# from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -58,6 +61,18 @@ class Item(BaseModel):
 
 
 app = FastAPI()
+
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.perf_counter()
+    response = await call_next(request)
+    process_time = time.perf_counter() - start_time
+    response.headers["X-Process-Time-Seconds"] = f"{process_time:0.4f}"
+    return response
+
+
+# app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
 @app.exception_handler(RequestValidationError)

@@ -64,6 +64,7 @@ def test_cert_sign():
     response = client.put(
         "/cert/sign",
         json={"name": "user1", "csr": csr},
+        # headers={"Content-Encoding": "gzip"},
     )
     assert response.status_code == 200
     assert response.json()["Request from"] == "user1"
