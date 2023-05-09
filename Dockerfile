@@ -17,13 +17,11 @@ RUN \
   ls -lah /.venv/lib/python3.9/site-packages
 
 FROM docker.io/python:3.9-slim-bullseye
-ARG VCS_REF
 WORKDIR /app
 # Copy the python packages because the distroless base image does
 COPY --from=base /.venv/lib/python3.9/site-packages /app/site-packages
 # Set the Python path where the interpreter will look for the packages
-ENV VCS_REF=${VCS_REF} \
-  PYTHONPATH=/app/site-packages \
+ENV PYTHONPATH=/app/site-packages \
   DEBIAN_FRONTEND=noninteractive LANGUAGE=C.UTF-8 LANG=C.UTF-8 LC_ALL=C.UTF-8 \
   LC_CTYPE=C.UTF-8 LC_MESSAGES=C.UTF-8
 COPY src/sign_srv_fastapi.py certs/privatekey.pem certs/public.crt /app/
@@ -41,6 +39,8 @@ CMD ["/usr/local/bin/python", "sign_srv_fastapi.py"]
 EXPOSE 80
 HEALTHCHECK --interval=13s --timeout=3s --start-period=2s --retries=3 \
   CMD /usr/bin/curl -sf 'http://localhost:80/healthz/container'
+ARG VCS_REF
+ENV VCS_REF=${VCS_REF}
 LABEL org.opencontainers.image.authors="Konstantin Babin" \
   org.opencontainers.image.source="github.com:babinkos/test-task-certsign-server-py/Dockerfile" \
   org.opencontainers.image.base.name="503110391064.dkr.ecr.eu-central-1.amazonaws.com/sign-svc" \

@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from logging.config import dictConfig
 from pathlib import Path
 from platform import node
+from typing import Union
 
 import uvicorn
 from cryptography import x509
@@ -58,6 +59,7 @@ logger = logging.getLogger("signsrv")
 class Item(BaseModel):
     name: str
     csr: str
+    validity: Union[int, None] = 3
 
 
 app = FastAPI()
@@ -112,7 +114,9 @@ CA_CERT = x509.load_pem_x509_certificate(open(CA_CERT_PATH, "rb").read())
 CA_KEY = serialization.load_pem_private_key(
     open(CA_KEY_PATH, "rb").read(), None, default_backend()
 )
-CERT_VALIDITY_DAYS = os.environ.get("CERT_VALIDITY_DAYS", 3)
+CERT_VALIDITY_DAYS = int(
+    os.environ.get("CERT_VALIDITY_DAYS", 3)  # if env.var unset - limit to 3 days
+)
 
 
 def load_csr_from_str(csr_str):
@@ -129,7 +133,7 @@ def load_csr_from_str(csr_str):
     return result
 
 
-def sign_certificate_request(csr_str):
+def sign_certificate_request(csr_str, validity):
     csr_cert = load_csr_from_str(csr_str)
     if csr_cert.is_signature_valid:
         cert = (
@@ -140,9 +144,9 @@ def sign_certificate_request(csr_str):
             .serial_number(x509.random_serial_number())
             .not_valid_before(datetime.utcnow())
             .not_valid_after(
-                # Our certificate will be valid for 10 days
+                # Our certificate will be valid for requested validity if it not more that CERT_VALIDITY_DAYS
                 datetime.utcnow()
-                + timedelta(days=CERT_VALIDITY_DAYS)
+                + timedelta(days=(min(validity, CERT_VALIDITY_DAYS)))
                 # Sign our certificate with our private key
             )
             .sign(CA_KEY, hashes.SHA512())
@@ -198,10 +202,19 @@ async def read_health_r53():
 # signed client cert valid for 3 days
 @app.put("/cert/sign")  # certs/sign data={name:"", csr:""}.
 async def cert_sign(item: Item):
+    """
+    Sign certificate request with all the information:
+
+    - **name**: client name string
+    - **csr**: base64/PEM certificate like starting from -----BEGIN CERTIFICATE REQUEST-----
+    - **validity**: not required, defaults to 3 if unset, will be capped by env.var if provided
+    \f
+    :param item: User input.
+    """
     logger.debug(f"name: {item.name}")
     return {
         "Request from": item.name,
-        "Result": sign_certificate_request(item.csr),
+        "Result": sign_certificate_request(item.csr, item.validity),
         "node": NODE_NAME,
     }
 
@@ -226,4 +239,5 @@ if __name__ == "__main__":
         access_log=True,
         workers=1,  # In K8s or ECS we should better run single worker per container, see : https://github.com/tiangolo/uvicorn-gunicorn-fastapi-docker#-warning-you-probably-dont-need-this-docker-image
         proxy_headers=True,  # https://github.com/encode/uvicorn/blob/master/uvicorn/config.py#L223
+        forwarded_allow_ips="*",
     )

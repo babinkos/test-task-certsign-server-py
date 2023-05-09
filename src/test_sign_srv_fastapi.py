@@ -63,7 +63,7 @@ def test_cert_sign():
     csr = open(CSR_PATH, "r").read()
     response = client.put(
         "/cert/sign",
-        json={"name": "user1", "csr": csr},
+        json={"name": "user1", "csr": csr, "validity": 2},
         # headers={"Content-Encoding": "gzip"},
     )
     assert response.status_code == 200
