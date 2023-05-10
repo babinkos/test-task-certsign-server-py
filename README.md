@@ -103,6 +103,8 @@ to evaluate memory consumption use `docker stats <container id>`
 ## TODO list
 
 1. Get CA cert and key from AWS SSM Parameter Store.
-2. Improve code coverage.
-3. Add gzip support.
-4. Maybe - rewrite in Go.
+2. Stress test shows that high network rates (even with low CPU load) cause healthcheck to fail and drain in on ALB. 
+  HaProxy container with backend of 5-6 signsvc containers would better load CPU under heavy load. This will improve scaling.
+3. Improve code coverage.
+4. Add gzip support.
+5. Maybe - rewrite in Go.
