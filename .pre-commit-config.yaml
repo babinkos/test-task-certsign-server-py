@@ -35,12 +35,12 @@ repos:
         args:
           - --no-strict-optional
           - --ignore-missing-imports
-  # - repo: local
-  #   hooks:
-  #     - id: pytest
-  #       name: pytest
-  #       entry: python -m pytest -v
-  #       language: system
-  #       pass_filenames: false
-  #       always_run: true
-  #       stages: [push]
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: pipenv run python -m pytest -v
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [push]
