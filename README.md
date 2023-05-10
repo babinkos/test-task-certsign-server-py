@@ -1,13 +1,13 @@
 # test-task-certsign-server-py
 
-## Description.
+## Description
 
-This project implemented with FastApi for educational purpose. All sources stored in `./src` folder.
+This project implemented with FastApi for educational purpose. All sources stored in [./src](https://github.com/babinkos/test-task-certsign-server-py/tree/main/src) folder.
 Required Python packages listed in `requirements.txt` and `Pipfile` (which then used in Dockerfile).
 
-This Api `/cert/sign` implements Certificate signing with CA key (this key should be generated locally with `prepare-ca-crt.sh` script).
+This Api `/cert/sign` endpoint implements Certificate signing with CA key (this key should be generated locally with `prepare-ca-crt.sh` script).
 
-Request JSON schema is defined in this class:
+Request JSON schema is defined in this class [Item](https://github.com/babinkos/test-task-certsign-server-py/blob/be28b90e12b950b5066e292a30bca0b88f8e8b32/src/sign_srv_fastapi.py#L59):
 ```
 class Item(BaseModel):
     name: str
@@ -15,14 +15,19 @@ class Item(BaseModel):
     validity: Union[int, None] = 3
 ```
 
-where name is a client name id for loggin purpose, csr is a PEM encoded CSR, with content like `-----BEGIN CERTIFICATE REQUEST-----\nMIII...`
+where `name` is a client name id for loggin purpose, `csr` is a PEM encoded CSR, with content like 
+```
+-----BEGIN CERTIFICATE REQUEST-----\nMIII...
+```
 parameter `validity` is optional, you can request certificate duration in days with it.
 
-Environment variable `CERT_VALIDITY_DAYS` might be provided and requested `validity` for CSR can't exceed that value. If unset CERT_VALIDITY_DAYS defaults to 3 days.
+Environment variable `CERT_VALIDITY_DAYS` might be provided and requested `validity` for CSR can't exceed that value. If unset `CERT_VALIDITY_DAYS` defaults to `3` days.
 
 
 Here is an example of curl command to send request to service:
-`curl -v -X PUT -H "Content-Type: application/json" 'http://127.0.0.1:8080/cert/sign' -d '{"name":"test1","csr":"none"}'`
+```
+curl -v -X PUT -H "Content-Type: application/json" 'http://127.0.0.1:8080/cert/sign' -d '{"name":"test1","csr":"none"}'
+```
 It will produce this output :
 ```
 *   Trying 127.0.0.1...
@@ -45,7 +50,9 @@ It will produce this output :
 ```
 Where addinional response header `x-process-time-seconds` provides seconds spent on csr processing.
 
-`curl -v -X PUT -H "Content-Type: application/json" 'http://127.0.0.1:8080/cert/sign' -d @test-curl-data.json`
+```
+curl -v -X PUT -H "Content-Type: application/json" 'http://127.0.0.1:8080/cert/sign' -d @test-curl-data.json
+```
 Will provide output :
 ```
   Trying 127.0.0.1...
@@ -74,7 +81,7 @@ Will provide output :
 
 ## How-to run locally
 
-Depending of you environment use one of this commands from `./src` :
+Depending of you environment use one of this commands from [./src](https://github.com/babinkos/test-task-certsign-server-py/tree/main/src) :
 - `pipenv run python sign_srv_fastapi.py`
 - `python sign_srv_fastapi.py`
 
@@ -98,4 +105,4 @@ to evaluate memory consumption use `docker stats <container id>`
 1. Get CA cert and key from AWS SSM Parameter Store.
 2. Improve code coverage.
 3. Add gzip support.
-4. Rewrite in Go.
+4. Maybe - rewrite in Go.
